@@ -2,7 +2,6 @@
 
 A simple distributed order matching system that demonstrates how multiple matching engines can synchronize order books across different nodes. 
 
-Final Project for CS512 Distsys 2024 Fall
 
 ## Project Structure
 ```
