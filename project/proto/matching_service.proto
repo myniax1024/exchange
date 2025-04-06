@@ -1,0 +1,179 @@
+syntax = "proto3";
+
+package matching;
+
+// Service definition for the matching engine
+service MatchingService {
+    // Submit a new order to the matching engine
+    rpc SubmitOrder (OrderRequest) returns (SubmitOrderResponse) {}
+    
+    // Cancel an existing order
+    rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse) {}
+    
+    // Poll for order book updates for synchronization
+    rpc SyncOrderBook (SyncRequest) returns (SyncResponse) {}
+
+    // Broadcast changes to internal orderbook state
+
+    rpc BroadcastOrderbook (BroadcastOrderbookRequest) returns (BroadcastOrderbookResponse) {}
+    
+    // Get current state of order book
+    rpc GetOrderBook (GetOrderbookRequest) returns (GetOrderbookResponse) {}
+
+    // Stream of fill notifications
+    rpc GetFills (FillRequest) returns (stream Fill) {}
+
+    // Put a routed fill to another ME
+
+    rpc PutFill (PutFillRequest) returns (PutFillResponse) {}
+
+    // Client Registration
+    rpc RegisterClient (ClientRegistrationRequest) returns (ClientRegistrationResponse) {}
+
+    // ME Registration
+    rpc RegisterME (RegisterMERequest) returns (RegisterMEResponse) {}
+
+    // ME Discovery
+    rpc DiscoverME (DiscoverMERequest) returns (DiscoverMEResponse) {}
+}
+
+// Order Submission
+message OrderRequest {
+    string order_id = 1;
+    string symbol = 2;
+    string side = 3;  // BUY or SELL
+    double price = 4;
+    int64 quantity = 5;
+    int64 remaining_quantity = 6;
+    string client_id = 7;
+    string engine_origin_addr = 8;
+    int64 timestamp = 9;
+}
+message SubmitOrderResponse {
+    string order_id = 1;
+    string status = 2;
+    string error_message = 3;
+}
+
+// Fill Information
+message FillRequest {
+    string client_id = 1;
+    string engine_destination_addr = 2;
+    int64 timeout = 3;
+}
+message Fill {
+    string fill_id = 1;
+    string order_id = 2;
+    string symbol = 3;
+    string side = 4; // BUY OR SELL
+    double price = 5;
+    int64 quantity = 6;
+    int64 remaining_quantity = 7;
+    int64 timestamp = 8;
+    string buyer_id = 9;
+    string seller_id = 10;
+    string engine_destination_addr = 11;
+}
+
+message PutFillRequest {
+    string client_id = 1;
+    Fill fill = 2;
+}
+
+message PutFillResponse {
+    string status = 1;
+}
+
+
+// Order Cancellation
+message CancelOrderRequest {
+    string order_id = 1;
+    string client_id = 2;
+    OrderRequest order_record = 3;
+}
+message CancelOrderResponse {
+    string order_id = 1;
+    string status = 2;
+    int64 quantity_cancelled = 3;
+}
+
+// Price level in order book
+message PriceLevel {
+    double price = 1;
+    int64 quantity = 2;
+    int32 order_count = 3;
+}
+
+// Orderbook Synchronization
+message SyncRequest {
+    string symbol = 1;
+    string engine_id = 2;
+    int64 num_levels = 3;
+}
+message SyncResponse {
+    string symbol = 1;
+    repeated PriceLevel bids = 2;
+    repeated PriceLevel asks = 3;
+    int64 sequence_number = 4;
+    string engine_id = 5;
+}
+
+message BroadcastOrderbookRequest {
+    string symbol = 1;
+    string originating_engine_id = 2;
+    int64 num_levels = 3;
+    repeated PriceLevel bids = 4;
+    repeated PriceLevel asks = 5;
+    int64 sequence_number = 6;
+}
+
+message BroadcastOrderbookResponse {
+    string symbol = 1;
+    string receiving_engine_id = 2;
+    string status = 3;
+}
+
+
+// Request to get current order book state
+message GetOrderbookRequest {
+    string symbol = 1;
+}
+message GetOrderbookResponse {
+    string symbol = 1;
+    repeated PriceLevel bids = 2;
+    repeated PriceLevel asks = 3;
+    int64 timestamp = 4;
+}
+
+// Client registration
+
+message ClientRegistrationRequest {
+    string client_id = 1;
+    string client_authentication = 2;
+    int64 client_x = 3;
+    int64 client_y = 4;
+}
+message ClientRegistrationResponse {
+    string status = 1;
+    string match_engine_address = 2;
+}
+
+// matching engine joining and discovery
+
+message RegisterMERequest {
+    string engine_id = 1;
+    string engine_addr = 2;
+    string engine_credentials = 3;
+}
+message RegisterMEResponse {
+    string status = 1;
+}
+message DiscoverMERequest {
+    string engine_id = 1;
+    string engine_addr = 2;
+    string engine_credentials = 3;
+}
+message DiscoverMEResponse {
+    string status = 1;
+    repeated string engine_addresses = 2;
+}
